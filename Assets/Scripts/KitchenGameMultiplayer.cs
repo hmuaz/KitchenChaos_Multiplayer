@@ -5,21 +5,29 @@ using UnityEngine;
 
 public class KitchenGameMultiplayer : NetworkBehaviour
 {
+
+
+
     public static KitchenGameMultiplayer Instance { get; private set; }
 
+
     [SerializeField] private KitchenObjectListSO kitchenObjectListSO;
+
+
     private void Awake()
     {
         Instance = this;
     }
 
+
+
     public void SpawnKitchenObject(KitchenObjectSO kitchenObjectSO, IKitchenObjectParent kitchenObjectParent)
     {
-        SpawnKitchenGameobjectServerRpc(GetKitchenObjectSOIndex(kitchenObjectSO), kitchenObjectParent.GetNetworkObject());
+        SpawnKitchenObjectServerRpc(GetKitchenObjectSOIndex(kitchenObjectSO), kitchenObjectParent.GetNetworkObject());
     }
 
     [ServerRpc(RequireOwnership = false)]
-    private void SpawnKitchenGameobjectServerRpc(int kitchenObjectSOIndex, NetworkObjectReference kitchenObjectParentNetworkObjectReferance)
+    private void SpawnKitchenObjectServerRpc(int kitchenObjectSOIndex, NetworkObjectReference kitchenObjectParentNetworkObjectReference)
     {
         KitchenObjectSO kitchenObjectSO = GetKitchenObjectSOFromIndex(kitchenObjectSOIndex);
 
@@ -30,8 +38,9 @@ public class KitchenGameMultiplayer : NetworkBehaviour
 
         KitchenObject kitchenObject = kitchenObjectTransform.GetComponent<KitchenObject>();
 
-        kitchenObjectParentNetworkObjectReferance.TryGet(out NetworkObject kitchenObjectParentNetworkObject);
+        kitchenObjectParentNetworkObjectReference.TryGet(out NetworkObject kitchenObjectParentNetworkObject);
         IKitchenObjectParent kitchenObjectParent = kitchenObjectParentNetworkObject.GetComponent<IKitchenObjectParent>();
+
         kitchenObject.SetKitchenObjectParent(kitchenObjectParent);
     }
 

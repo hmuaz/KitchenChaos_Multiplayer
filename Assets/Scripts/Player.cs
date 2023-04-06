@@ -104,6 +104,7 @@ public class Player : NetworkBehaviour, IKitchenObjectParent
             if (raycastHit.transform.TryGetComponent(out BaseCounter baseCounter))
             {
                 // Has ClearCounter
+
                 if (baseCounter != selectedCounter)
                 {
                     SetSelectedCounter(baseCounter);
