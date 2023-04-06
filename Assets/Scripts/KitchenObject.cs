@@ -17,7 +17,13 @@ public class KitchenObject : NetworkBehaviour
     protected virtual void Awake()
     {
         followTransform = GetComponent<FollowTransform>();
+        if (followTransform == null)
+        {
+            Debug.Log("followTransformwakw is null!");
+        }
     }
+
+
 
     public KitchenObjectSO GetKitchenObjectSO()
     {
@@ -39,7 +45,10 @@ public class KitchenObject : NetworkBehaviour
     private void SetKitchenObjectParentClientRpc(NetworkObjectReference kitchenObjectParentNetworkObjectReference)
     {
         kitchenObjectParentNetworkObjectReference.TryGet(out NetworkObject kitchenObjectParentNetworkObject);
+        
         IKitchenObjectParent kitchenObjectParent = kitchenObjectParentNetworkObject.GetComponent<IKitchenObjectParent>();
+
+        
 
         if (this.kitchenObjectParent != null)
         {
@@ -54,7 +63,11 @@ public class KitchenObject : NetworkBehaviour
         }
 
         kitchenObjectParent.SetKitchenObject(this);
-
+        if(followTransform == null)
+        {
+            Debug.Log("followtransform null");
+        }
+        
         followTransform.SetTargetTransform(kitchenObjectParent.GetKitchenObjectFollowTransform());
     }
 
