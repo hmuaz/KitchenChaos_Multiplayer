@@ -29,6 +29,8 @@ public class KitchenGameManager : NetworkBehaviour
         GameOver,
     }
 
+    [SerializeField] private Transform playerPrefab;
+
 
     private NetworkVariable<State> state = new NetworkVariable<State>(State.WaitingToStart);
     private bool isLocalPlayerReady;
@@ -61,9 +63,19 @@ public class KitchenGameManager : NetworkBehaviour
         state.OnValueChanged += State_OnValueChanged;
         isGamePaused.OnValueChanged += IsGamePaused_OnValueChanged;
 
-        if(IsServer)
+        if (IsServer)
         {
             NetworkManager.Singleton.OnClientDisconnectCallback += NetworkManager_OnClientDisconnectCallback;
+            NetworkManager.Singleton.SceneManager.OnLoadEventCompleted += SceneManager_OnLoadEventCompleted;
+        }
+    }
+
+    private void SceneManager_OnLoadEventCompleted(string sceneName, UnityEngine.SceneManagement.LoadSceneMode loadSceneMode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
+    {
+        foreach (ulong clientId in NetworkManager.Singleton.ConnectedClientsIds)
+        {
+            Transform playerTransform = Instantiate(playerPrefab);
+            playerTransform.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientId ,true);
         }
     }
 
@@ -74,7 +86,7 @@ public class KitchenGameManager : NetworkBehaviour
 
     private void IsGamePaused_OnValueChanged(bool previousValue, bool newValue)
     {
-        if(isGamePaused.Value)
+        if (isGamePaused.Value)
         {
             Time.timeScale = 0f;
             OnMultiplayerGamePaused?.Invoke(this, EventArgs.Empty);
@@ -164,7 +176,7 @@ public class KitchenGameManager : NetworkBehaviour
 
     private void LateUpdate()
     {
-        if(autoTestGamePausedState)
+        if (autoTestGamePausedState)
         {
             autoTestGamePausedState = false;
 
@@ -241,9 +253,9 @@ public class KitchenGameManager : NetworkBehaviour
 
     private void TestGamePausedState()
     {
-        foreach(ulong clientId in NetworkManager.Singleton.ConnectedClientsIds)
+        foreach (ulong clientId in NetworkManager.Singleton.ConnectedClientsIds)
         {
-            if(playerPausedDictionary.ContainsKey(clientId) && playerPausedDictionary[clientId])
+            if (playerPausedDictionary.ContainsKey(clientId) && playerPausedDictionary[clientId])
             {
                 //This player is paused
                 isGamePaused.Value = true;
