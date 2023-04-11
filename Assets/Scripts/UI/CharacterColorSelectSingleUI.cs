@@ -39,4 +39,10 @@ public class CharacterColorSelectSingleUI : MonoBehaviour
             selectedGameObject.SetActive(false);
         }
     }
+
+    private void OnDestroy()
+    {
+        KitchenGameMultiplayer.Instance.OnPlayerDataNetworkListChanged -= KitchenGameMultiplayer_OnPlayerDataNetworkListChanged;
+
+    }
 }
