@@ -17,8 +17,16 @@ public class KitchenGameLobby : MonoBehaviour
     public event EventHandler OnJoinStarted;
     public event EventHandler OnQuickJoinFailed;
     public event EventHandler OnJoinFailed;
+    public event EventHandler<OnListLobbyChangedEventArgs> OnListLobbyChanged;
+
+    public class OnListLobbyChangedEventArgs : EventArgs
+    {
+        public List<Lobby> lobbyList;
+    }
 
     private float heartbeatTimer;
+    private float listLobbiesTimer;
+
     private void Awake()
     {
         Instance = this;
@@ -31,6 +39,18 @@ public class KitchenGameLobby : MonoBehaviour
     private void Update()
     {
         HandleHeartbeat();
+        HandlePeriodicListLobbies();
+    }
+
+    private void HandlePeriodicListLobbies()
+    {
+        listLobbiesTimer -= Time.deltaTime;
+        if (listLobbiesTimer <= 0)
+        {
+            float listLobbiesTimerMax = 3f;
+            listLobbiesTimer = listLobbiesTimerMax;
+            ListLobbies();
+        }
     }
 
     private void HandleHeartbeat()
@@ -114,7 +134,25 @@ public class KitchenGameLobby : MonoBehaviour
 
             KitchenGameMultiplayer.Instance.StartClient();
         }
-        catch(LobbyServiceException e)
+        catch (LobbyServiceException e)
+        {
+            OnJoinFailed?.Invoke(this, EventArgs.Empty);
+
+            Debug.Log(e);
+        }
+    }
+
+    public async void JoinWithId(string lobbyId)
+    {
+        OnJoinStarted?.Invoke(this, EventArgs.Empty);
+
+        try
+        {
+            joinedLobby = await LobbyService.Instance.JoinLobbyByIdAsync(lobbyId);
+
+            KitchenGameMultiplayer.Instance.StartClient();
+        }
+        catch (LobbyServiceException e)
         {
             OnJoinFailed?.Invoke(this, EventArgs.Empty);
 
@@ -124,7 +162,7 @@ public class KitchenGameLobby : MonoBehaviour
 
     public async void DeleteLobby()
     {
-        if(joinedLobby != null)
+        if (joinedLobby != null)
         {
             try
             {
@@ -141,7 +179,7 @@ public class KitchenGameLobby : MonoBehaviour
 
     public async void LeaveLobby()
     {
-        if(joinedLobby != null)
+        if (joinedLobby != null)
         {
             try
             {
@@ -174,5 +212,30 @@ public class KitchenGameLobby : MonoBehaviour
     public Lobby GetLobby()
     {
         return joinedLobby;
+    }
+
+    private async void ListLobbies()
+    {
+        if (joinedLobby == null && AuthenticationService.Instance.IsSignedIn)
+        {
+            try
+            {
+                QueryLobbiesOptions options = new QueryLobbiesOptions()
+                {
+                    Filters = new List<QueryFilter>() { new QueryFilter(QueryFilter.FieldOptions.AvailableSlots, "0", QueryFilter.OpOptions.GT) }
+
+                };
+                QueryResponse queryResponse = await LobbyService.Instance.QueryLobbiesAsync(options);
+
+                OnListLobbyChanged?.Invoke(this, new OnListLobbyChangedEventArgs
+                {
+                    lobbyList = queryResponse.Results
+                });
+            }
+            catch (LobbyServiceException e)
+            {
+                Debug.Log(e);
+            }
+        }
     }
 }
